@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  creationTimestamp: "2025-08-13T11:09:54Z"
+  generation: 5
+  name: google-boutique
+  namespace: argocd
+  resourceVersion: "98107"
+  uid: 1fcf5d20-0868-4866-b8c4-b44665de211a
+spec:
+  description: google-boutique-project
+  destinationServiceAccounts:
+  - defaultServiceAccount: in-cluster
+    namespace: google-boutique
+    server: https://kubernetes.default.svc
+  destinations:
+  - name: in-cluster
+    namespace: google-boutique
+    server: https://kubernetes.default.svc
+  sourceRepos:
+  - https://github.com/dark1ngGO/microservices-demo.git
+status: {}
