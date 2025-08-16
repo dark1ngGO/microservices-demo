@@ -1,11 +1,17 @@
-project: google-boutique
-source:
-  repoURL: https://github.com/dark1ngGO/microservices-demo.git
-  path: kubernetes-manifests
-  targetRevision: main
-destination:
-  server: https://kubernetes.default.svc
-  namespace: google-boutique
-syncPolicy:
-  automated:
-    selfHeal: true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: onlineboutique
+  namespace: argocd  
+spec:
+  project: google-boutique
+  source:
+    repoURL: https://github.com/dark1ngGO/microservices-demo.git
+    path: kubernetes-manifests
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: google-boutique
+  syncPolicy:
+    automated:
+      selfHeal: true
