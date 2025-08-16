@@ -50,7 +50,7 @@ opentelemetryCollector:
 googleCloudOperations:
   profiler: false
   tracing: false
-  metrics: false
+  metrics: true
 
 seccompProfile:
   enable: false
