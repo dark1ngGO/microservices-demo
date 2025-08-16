@@ -63,6 +63,10 @@ spec:
               httpHeaders:
               - name: "Cookie"
                 value: "shop_session-id=x-liveness-probe"
+        - name: nginx-exporter  # Экспортер как sidecar
+          image: nginx/nginx-prometheus-exporter:0.11.0
+          args:
+            - '-nginx.scrape-uri=http://localhost:8080/stub_status'
           env:
           - name: PORT
             value: "8080"
