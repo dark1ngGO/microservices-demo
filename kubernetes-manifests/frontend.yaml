@@ -39,7 +39,11 @@ spec:
         - name: nginx-exporter  # Экспортер как sidecar
           image: nginx/nginx-prometheus-exporter:0.11.0
           args:
-            - '-nginx.scrape-uri=http://localhost:8081/stub_status'      
+            - '-nginx.scrape-uri=http://localhost:8081/stub_status'  
+          volumeMounts:
+            - name: nginx-exporter-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
         - name: server
           securityContext:
             allowPrivilegeEscalation: false
@@ -108,6 +112,10 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+      volumes:
+        - name: nginx-exporter-config
+          configMap:
+            name: nginx-exporter-config
 ---
 apiVersion: v1
 kind: Service
@@ -143,3 +151,18 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: frontend
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-exporter-config
+data:
+  nginx.conf: |
+    server {
+      listen 8081;
+      location /stub_status {
+        stub_status;
+        allow 127.0.0.1;
+        deny all;
+      }
+    }
