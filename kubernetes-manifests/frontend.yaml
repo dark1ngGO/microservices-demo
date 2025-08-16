@@ -38,12 +38,19 @@ spec:
       containers:
         - name: nginx-metrics
           image: nginx:alpine
+          securityContext:
+            runAsUser: 101  # NGINX user
+            runAsGroup: 101
           ports:
             - containerPort: 8081
           volumeMounts:
             - name: nginx-metrics-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: nginx-temp
+              mountPath: /var/cache/nginx
+            - name: nginx-temp
+              mountPath: /var/run
           command: ["nginx", "-g", "daemon off;"]
 
         - name: nginx-exporter
@@ -112,8 +119,12 @@ spec:
         - name: nginx-metrics-config
           configMap:
             name: nginx-metrics-config
+        - name: nginx-temp
+          emptyDir: {}
 
 ---
+
+
 
 apiVersion: v1
 kind: Service
@@ -165,7 +176,11 @@ metadata:
   name: nginx-metrics-config
 data:
   nginx.conf: |
-    events {}
+    user nginx;
+    worker_processes auto;
+    events {
+      worker_connections 1024;
+    }
     http {
       server {
         listen 8081;
