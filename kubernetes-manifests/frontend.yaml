@@ -39,16 +39,20 @@ spec:
         - name: nginx-metrics
           image: nginx:alpine
           ports:
-          - containerPort: 8081
+            - containerPort: 8081
           volumeMounts:
-          - name: nginx-metrics-config
-            mountPath: /etc/nginx/conf.d/default.conf
+            - name: nginx-metrics-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
           command: ["nginx", "-g", "daemon off;"]
 
         - name: nginx-exporter
           image: nginx/nginx-prometheus-exporter:0.11.0
           args:
             - '-nginx.scrape-uri=http://localhost:8081/stub_status'
+          ports:
+            - containerPort: 9113
+
         - name: server
           securityContext:
             allowPrivilegeEscalation: false
@@ -59,57 +63,44 @@ spec:
             readOnlyRootFilesystem: true
           image: gcr.io/google-samples/microservices-demo/frontend:v0.8.0
           ports:
-          - containerPort: 8080
+            - containerPort: 8080
           readinessProbe:
             initialDelaySeconds: 10
             httpGet:
               path: "/_healthz"
               port: 8080
               httpHeaders:
-              - name: "Cookie"
-                value: "shop_session-id=x-readiness-probe"
+                - name: "Cookie"
+                  value: "shop_session-id=x-readiness-probe"
           livenessProbe:
             initialDelaySeconds: 10
             httpGet:
               path: "/_healthz"
               port: 8080
               httpHeaders:
-              - name: "Cookie"
-                value: "shop_session-id=x-liveness-probe"
+                - name: "Cookie"
+                  value: "shop_session-id=x-liveness-probe"
           env:
-          - name: PORT
-            value: "8080"
-          - name: PRODUCT_CATALOG_SERVICE_ADDR
-            value: "productcatalogservice:3550"
-          - name: CURRENCY_SERVICE_ADDR
-            value: "currencyservice:7000"
-          - name: CART_SERVICE_ADDR
-            value: "cartservice:7070"
-          - name: RECOMMENDATION_SERVICE_ADDR
-            value: "recommendationservice:8080"
-          - name: SHIPPING_SERVICE_ADDR
-            value: "shippingservice:50051"
-          - name: CHECKOUT_SERVICE_ADDR
-            value: "checkoutservice:5050"
-          - name: AD_SERVICE_ADDR
-            value: "adservice:9555"
-          - name: SHOPPING_ASSISTANT_SERVICE_ADDR
-            value: "shoppingassistantservice:80"
-          # # ENV_PLATFORM: One of: local, gcp, aws, azure, onprem, alibaba
-          # # When not set, defaults to "local" unless running in GKE, otherwies auto-sets to gcp
-          # - name: ENV_PLATFORM
-          #   value: "aws"
-          - name: ENABLE_PROFILER
-            value: "0"
-          # - name: CYMBAL_BRANDING
-          #   value: "true"
-          # - name: ENABLE_ASSISTANT
-          #   value: "true"
-          # - name: FRONTEND_MESSAGE
-          #   value: "Replace this with a message you want to display on all pages."
-          # As part of an optional Google Cloud demo, you can run an optional microservice called the "packaging service".
-          # - name: PACKAGING_SERVICE_URL
-          #   value: "" # This value would look like "http://123.123.123"
+            - name: PORT
+              value: "8080"
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: "productcatalogservice:3550"
+            - name: CURRENCY_SERVICE_ADDR
+              value: "currencyservice:7000"
+            - name: CART_SERVICE_ADDR
+              value: "cartservice:7070"
+            - name: RECOMMENDATION_SERVICE_ADDR
+              value: "recommendationservice:8080"
+            - name: SHIPPING_SERVICE_ADDR
+              value: "shippingservice:50051"
+            - name: CHECKOUT_SERVICE_ADDR
+              value: "checkoutservice:5050"
+            - name: AD_SERVICE_ADDR
+              value: "adservice:9555"
+            - name: SHOPPING_ASSISTANT_SERVICE_ADDR
+              value: "shoppingassistantservice:80"
+            - name: ENABLE_PROFILER
+              value: "0"
           resources:
             requests:
               cpu: 100m
@@ -118,10 +109,12 @@ spec:
               cpu: 200m
               memory: 128Mi
       volumes:
-        - name: nginx-exporter-config
+        - name: nginx-metrics-config
           configMap:
-            name: nginx-exporter-config
+            name: nginx-metrics-config
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -133,10 +126,15 @@ spec:
   selector:
     app: frontend
   ports:
-  - name: http
-    port: 80
-    targetPort: 8080
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: metrics
+      port: 9113
+      targetPort: 9113
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -148,26 +146,8 @@ spec:
   selector:
     app: frontend
   ports:
-  - name: http
-    port: 80
-    targetPort: 8080
+    - name: http
+      port: 80
+      targetPort: 8080
+
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: frontend
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-metrics-config
-data:
-  default.conf: |
-    server {
-      listen 8081;
-      location /stub_status {
-        stub_status;
-        allow 127.0.0.1;
-        deny all;
-      }
-    }
