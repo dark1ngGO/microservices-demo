@@ -36,6 +36,10 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
       containers:
+        - name: nginx-exporter  # Экспортер как sidecar
+          image: nginx/nginx-prometheus-exporter:0.11.0
+          args:
+            - '-nginx.scrape-uri=http://localhost:8088/stub_status'      
         - name: server
           securityContext:
             allowPrivilegeEscalation: false
@@ -63,10 +67,6 @@ spec:
               httpHeaders:
               - name: "Cookie"
                 value: "shop_session-id=x-liveness-probe"
-        - name: nginx-exporter  # Экспортер как sidecar
-          image: nginx/nginx-prometheus-exporter:0.11.0
-          args:
-            - '-nginx.scrape-uri=http://localhost:8080/stub_status'
           env:
           - name: PORT
             value: "8080"
