@@ -111,6 +111,10 @@ metadata:
   name: frontend
   labels:
     app: frontend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"        # порт, который слушает сервис
+    prometheus.io/path: "/metrics"
 spec:
   type: ClusterIP
   selector:
